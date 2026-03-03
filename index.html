@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修仙：仙途經商 - 專業重構版</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game-container">
+    <div id="start-skill-overlay" class="overlay" style="display:flex;">
+        <h2 style="color:#ffd700">--- 選擇初始功法 ---</h2>
+        <div onclick="Game.pickInitialSkill(0)" class="shop-item">🔥 烈焰咒 (2.5x 傷害)</div>
+        <div onclick="Game.pickInitialSkill(1)" class="shop-item">⚡ 奔雷疾 (2.0x 傷害)</div>
+        <div onclick="Game.pickInitialSkill(2)" class="shop-item">🛡️ 金剛經 (1.5x 傷害並回血)</div>
+    </div>
+
+    <div id="shop-overlay" class="overlay">
+        <h2 style="color:#00ffcc; margin:5px;">🏮 萬寶商行</h2>
+        <p style="color:#ffd700; margin-bottom:10px;">靈石：<span id="shop-money">0</span></p>
+        <div id="shop-items-list" style="width: 100%; overflow-y: auto; max-height: 250px;"></div>
+        <div style="display:flex; gap:10px; width:90%; margin-top:10px;">
+            <button onclick="Game.sellAllLoot()" style="flex:1; background:#444;">賣出雜物</button>
+            <button onclick="Game.closeShop()" style="flex:1; background:#600;">離開</button>
+        </div>
+    </div>
+
+    <div id="death-screen" class="overlay">
+        <h1 style="color:red">身死道消</h1>
+        <p id="death-reason" style="color:#888; margin-bottom:20px;"></p>
+        <button onclick="location.reload()" style="width:150px; background:#600;">投胎轉世</button>
+    </div>
+
+    <h2 style="text-align: center; color: #fff; margin: 0 0 15px 0;">☯️ 修仙：仙途經商</h2>
+    
+    <div class="stats">
+        <div>境界：<b id="realm">凡人</b></div>
+        <div>靈根：<b id="spirit" style="color: #00ffcc;">-</b></div>
+        <div>氣血：<b id="hp">100</b> / <span id="maxHp">100</span></div>
+        <div>靈力：<b id="mp">50</b> / <span id="maxMp">50</span></div>
+        <div>攻擊：<b id="atk">15</b></div>
+        <div>靈石：<b id="money">0</b></div>
+        <div style="grid-column: span 2;">修為：<b id="exp">0</b> / <span id="maxExp">100</span></div>
+        <div style="font-size: 11px; color: #888; grid-column: span 2; padding: 5px; border-top: 1px solid #444; margin-top: 5px;" id="spirit-info"></div>
+    </div>
+
+    <div class="equip-section">
+        <div class="equip-slot">🗡️ 武器：<span id="weapon-name" class="equip-name">生鏽鐵劍</span><br><small id="weapon-info">倍率: 1.0x</small></div>
+        <div class="equip-slot">🛡️ 防具：<span id="armor-name" class="equip-name">布衣</span><br><small id="armor-info">減傷: 0%</small></div>
+    </div>
+
+    <div id="battle-panel" class="battle-ui">
+        <div style="text-align:center; color:red; font-weight:bold;">⚠️ <span id="enemy-name">妖獸</span> ⚠️</div>
+        <div style="display:flex; justify-content: space-between; font-size: 12px;">
+            <span>敵方氣血: <b id="enemy-hp">0</b></span>
+            <span>敵方攻擊: <b id="enemy-atk">0</b></span>
+        </div>
+    </div>
+
+    <div id="log">--- 宿命之輪轉動 ---<br></div>
+
+    <div id="main-btns" class="btns">
+        <button onclick="Game.train()">打坐修煉</button>
+        <button onclick="Game.startAdventure()">外出歷練</button>
+        <button onclick="Game.rest()">閉目小憩</button>
+        <button id="break-btn" onclick="Game.breakthrough()">嘗試突破</button>
+    </div>
+
+    <div id="battle-btns" class="btns" style="display:none;">
+        <button onclick="Game.attackEnemy()" style="background:#444;">普通攻擊</button>
+        <button id="spell-btn" onclick="Game.castCurrentSpell()" style="background:#006;">發動神通</button>
+    </div>
+
+    <div id="inventory-ui">
+        📦 儲物袋：<span id="loot-list">尚無戰利品</span><br>
+        💊 血藥：<span id="potion-count">0</span> 顆大還丹 
+        <button id="use-potion-btn" onclick="Game.usePotion()" style="padding:2px 5px; font-size:10px;" disabled>使用</button>
+    </div>
+    <div id="skill-list-ui" style="margin-top:5px; font-size:12px; color:#ffca28;">神通庫：無</div>
+    
+    <button onclick="localStorage.clear(); location.reload();" style="margin-top:10px; font-size:10px; background:none; border:none; color:#555;">重置所有進度</button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
