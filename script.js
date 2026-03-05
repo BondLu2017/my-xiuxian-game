@@ -48,7 +48,7 @@ const Game = (function() {
         { name: "金剛經", mult: 1.5, cost: 12 }
     ];
 
-    const SAVE_KEY = "xiuxian_save_final_v1";
+    const SAVE_KEY = "xiuxian_save_blue_saint_v3";
 
     function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
     function load() {
@@ -60,7 +60,6 @@ const Game = (function() {
         }
     }
 
-    // 支援 HTML 標籤的日誌系統
     function addLog(msg) {
         const log = document.getElementById('log');
         const entry = document.createElement('div');
@@ -74,13 +73,15 @@ const Game = (function() {
             state.hp = 0; updateDisplay();
             document.getElementById('death-reason').innerText = reason;
             document.getElementById('death-screen').style.display = 'flex';
-            localStorage.removeItem(SAVE_KEY); 
             return true;
         }
         return false;
     }
 
     function updateDisplay() {
+        document.getElementById('money').innerText = state.money;
+        document.getElementById('shop-money').innerText = state.money;
+        
         let displayRealm = realms[state.realmIndex];
         if (state.isDemon) displayRealm = `<span style="color:#ff4444;">(魔)</span> ${displayRealm}`;
         document.getElementById('realm').innerHTML = displayRealm;
@@ -88,21 +89,21 @@ const Game = (function() {
         document.getElementById('maxHp').innerText = state.maxHp;
         document.getElementById('mp').innerText = Math.ceil(state.mp);
         document.getElementById('maxMp').innerText = state.maxMp;
-        document.getElementById('money').innerText = state.money;
+        document.getElementById('exp').innerText = Math.floor(state.exp);
+        document.getElementById('maxExp').innerText = Math.floor(state.maxExp);
         
         let currentAtk = Math.ceil(state.atk * state.currentWeapon.mult);
         document.getElementById('atk').innerText = state.realmIndex >= 6 ? "∞" : currentAtk;
         
-        document.getElementById('exp').innerText = Math.floor(state.exp);
-        document.getElementById('maxExp').innerText = Math.floor(state.maxExp);
-        document.getElementById('spirit').innerText = state.isDemon ? "墮入魔道" : state.spiritType;
-        document.getElementById('spirit-info').innerText = state.isDemon ? "攻擊與修煉收益翻倍，但突破極度危險！" : state.spiritDesc;
-        
         document.getElementById('weapon-name').innerText = state.currentWeapon.name;
+        document.getElementById('weapon-info').innerText = `倍率: ${state.currentWeapon.mult}x`;
         document.getElementById('armor-name').innerText = state.currentArmor.name;
+        document.getElementById('armor-info').innerText = `減傷: ${Math.round(state.currentArmor.def * 100)}%`;
         document.getElementById('shoe-name').innerText = state.currentShoe.name;
-        document.getElementById('shoe-info').innerText = `逃跑: ${Math.round(state.currentShoe.escapeRate*100)}%`;
-        
+        document.getElementById('shoe-info').innerText = `逃跑: ${Math.round(state.currentShoe.escapeRate * 100)}%`;
+
+        document.getElementById('spirit').innerText = state.isDemon ? "墮入魔道" : state.spiritType;
+        document.getElementById('spirit-info').innerText = state.isDemon ? "魔道附身：傷害翻倍，突破凶險！" : state.spiritDesc;
         document.getElementById('loot-list').innerText = `妖丹x${state.loot["妖丹"]}, 獸皮x${state.loot["獸皮"]}, 精血x${state.loot["精血"]}`;
         document.getElementById('potion-count').innerText = state.potions;
         document.getElementById('use-potion-btn').disabled = state.potions <= 0;
@@ -124,7 +125,7 @@ const Game = (function() {
         pickInitialSkill: function(idx) {
             state.mySkills.push(allSkills[idx]);
             state.hasInitialSkill = true;
-            addLog(`<span style="color:#ffd700;">✨ 葉大仙贈予你草鞋與功法，並祝你在【藍聖傳】一舉成名。</span>`);
+            addLog(`<span style="color:#ffd700;">✨ 葉大仙贈予你草鞋與功法。</span>`);
             state.currentShoe = { name: "草鞋", escapeRate: 0.25, price: 0 };
             document.getElementById('start-skill-overlay').style.display='none';
             const spirits = [
@@ -144,28 +145,22 @@ const Game = (function() {
         },
 
         train: function() {
-            if(state.exp >= state.maxExp) return addLog("瓶頸已至，請先嘗試突破！");
-            let mult = (state.isDemon ? 2.0 : 1.0) * state.trainMult;
-            let gainExp = Math.floor(20 * mult);
+            if(state.exp >= state.maxExp) return addLog("瓶頸已至，請速速突破！");
+            let gainExp = Math.floor(20 * (state.isDemon ? 2.0 : 1.0) * state.trainMult);
             state.exp = Math.min(state.maxExp, state.exp + gainExp);
             state.mp = Math.min(state.maxMp, state.mp + 10);
             state.hp -= 5;
-            addLog(`🧘 納氣修煉中... <span class="val-exp">修為 +${gainExp}</span>`);
+            addLog(`🧘 納氣中... 修為 +${gainExp}`);
             if (checkDeath("走火入魔。")) return;
             updateDisplay(); save();
         },
 
         breakthrough: function() {
-            if(state.exp < state.maxExp) return addLog("修為不足，尚未感應到天道契機。");
-            
-            // 魔道突破極度危險
-            if(state.isDemon && Math.random() < 0.3) return checkDeath("💀 魔氣倒灌！你終究無法承受魔道反噬，爆體而亡！");
-
-            // 心魔大劫
+            if(state.exp < state.maxExp) return addLog("修為不足。");
+            if(state.isDemon && Math.random() < 0.3) return checkDeath("💀 魔氣倒灌！爆體而亡！");
             if(state.realmIndex === 5) {
-                addLog(`<span style="color:red; font-size:16px;">🔥 警告：心魔顯現！這是成就藍聖的最後考驗！</span>`);
-                state.isFacingInnerDemon = true;
-                isInBattle = true;
+                addLog(`<span style="color:red; font-size:16px;">🔥 警告：心魔顯現！</span>`);
+                state.isFacingInnerDemon = true; isInBattle = true;
                 enemy = { name: "心魔", hp: 3000, atk: 220, drop: "無" };
                 document.getElementById('main-btns').style.display = 'none';
                 document.getElementById('battle-btns').style.display = 'grid';
@@ -173,30 +168,23 @@ const Game = (function() {
                 document.getElementById('enemy-name').innerText = enemy.name;
                 updateDisplay(); return;
             }
-
-            // 普通突破
             if(Math.random() > 0.4) {
-                state.realmIndex++; 
-                state.exp = 0; 
-                state.maxExp *= 2.5; 
-                state.baseAtk += 15; 
-                state.atk = state.baseAtk;
+                state.realmIndex++; state.exp=0; state.maxExp*=2.5; 
+                state.baseAtk += 15; state.atk = state.baseAtk;
                 document.getElementById('advance-overlay').style.display = 'flex';
                 addLog(`<span class="log-win">🎊 成功晉升至【${realms[state.realmIndex]}】！</span>`);
             } else {
-                state.exp -= Math.floor(state.exp * 0.3); 
-                state.hp -= 30;
-                addLog(`<span class="val-down">💥 突破失敗！天雷反噬，修為倒退！</span>`);
-                checkDeath("突破失敗，道基崩毀。");
+                state.exp -= Math.floor(state.exp * 0.3); state.hp -= 30;
+                addLog(`💥 突破失敗！修為倒退。`);
+                checkDeath("突破反噬。");
             }
             updateDisplay(); save();
         },
 
         startAdventure: function() {
-            if(state.hp < 20) return addLog("氣血虛弱，此時外出歷練恐有生命之憂。");
+            if(state.hp < 20) return addLog("氣血虛弱。");
             let r = Math.random();
             if(r < 0.6) {
-                // 觸發戰鬥
                 isInBattle = true;
                 let m = monsters[Math.min(state.realmIndex, monsters.length-1)];
                 enemy = { ...m, hp: m.hp + state.realmIndex*50, atk: m.atk + state.realmIndex*20 };
@@ -206,43 +194,30 @@ const Game = (function() {
                 document.getElementById('enemy-name').innerText = enemy.name;
                 addLog(`⚔️ 遭遇妖獸【${enemy.name}】！`);
             } else if(r < 0.85) {
-                // 觸發商店
                 this.renderShop();
                 document.getElementById('shop-overlay').style.display = 'flex';
-                document.getElementById('shop-money').innerText = state.money;
             } else {
-                // 觸發隨機奇遇
-                let chance = Math.random();
-                if (chance < 0.15) { 
-                    this.triggerQiaoQiaoEvent(); // 小師妹蕎蕎奇遇
-                } else if (chance < 0.5) { 
-                    state.money += 50; 
-                    addLog(`🍀 在山洞中撿到前人遺落的 <span style="color:#ffd700;">靈石 +50</span>`); 
-                } else { 
-                    let heal = Math.floor(state.maxHp * 0.3); 
-                    state.hp = Math.min(state.maxHp, state.hp + heal); 
-                    addLog(`🍀 飲用靈泉，氣血回復了 ${heal} 點。`); 
-                }
+                if (Math.random() < 0.2) this.triggerQiaoQiaoEvent();
+                else { state.money += 50; addLog(`🍀 撿到 靈石 +50`); }
             }
             updateDisplay(); save();
         },
 
         triggerQiaoQiaoEvent: function() {
             let roll = Math.random() * 100;
-            let skill = null;
-            if (roll < 45) skill = { name: "金剛不壞童子身", type: "passive", desc: "練體增傷" };
-            else if (roll < 90) skill = { name: "鬥破山河焚仙訣", type: "passive", desc: "練氣增傷" };
-            else skill = { name: "彭大仙滅世功法", type: "active", cost: 0 };
+            let skill = (roll < 45) ? { name: "金剛不壞童子身", type: "passive" } : 
+                        (roll < 90) ? { name: "鬥破山河焚仙訣", type: "passive" } : 
+                        { name: "彭大仙滅世功法", type: "active", cost: 0 };
 
             if (state.mySkills.some(s => s.name === skill.name)) {
                 state.potions += 1;
-                addLog(`<span class="log-qiaoqiao">🌸 小師妹【蕎蕎】跑來：「師兄，這顆大還丹給你補補身體！」</span>`);
+                addLog(`<span class="log-qiaoqiao">🌸 蕎蕎：「師兄給你藥藥！」(獲得大還丹)</span>`);
             } else {
                 state.mySkills.push(skill);
-                addLog(`<span class="log-qiaoqiao">🌸 小師妹【蕎蕎】甜甜一笑：「師兄！這本神功給你，你要變最強喔！」</span>`);
-                addLog(`<span class="log-divine">✨ 獲得神級功法：【${skill.name}】！</span>`);
+                addLog(`<span class="log-qiaoqiao">🌸 蕎蕎：「師兄，這本秘籍給你！」</span>`);
+                addLog(`<span class="log-divine">✨ 獲得神功：【${skill.name}】！</span>`);
             }
-            updateDisplay();
+            updateDisplay(); save();
         },
 
         attackEnemy: function() {
@@ -251,130 +226,84 @@ const Game = (function() {
             if (state.mySkills.some(s => s.name === "金剛不壞童子身")) divineMult += (state.maxHp / 100) * 0.5;
             if (state.mySkills.some(s => s.name === "鬥破山河焚仙訣")) divineMult += (state.maxMp / 50) * 0.5;
 
-            let randomFactor = 0.9 + Math.random() * 0.2; // 0.9 ~ 1.1 波動
-            let d = Math.ceil(state.atk * state.currentWeapon.mult * mult * divineMult * randomFactor);
+            let d = Math.ceil(state.atk * state.currentWeapon.mult * mult * divineMult * (0.9 + Math.random()*0.2));
             enemy.hp -= d;
-            addLog(`<span class="log-atk">🗡️ 你施展招式，造成 ${d} 點傷害。</span>`);
-            
-            if(enemy.hp <= 0) {
-                if(state.isFacingInnerDemon) this.triggerEnding();
-                else this.winBattle();
-            } else this.enemyTurn();
+            addLog(`<span class="log-atk">🗡️ 造成 ${d} 傷害。</span>`);
+            if(enemy.hp <= 0) this.winBattle();
+            else this.enemyTurn();
         },
 
         castCurrentSpell: function() {
             let s = state.mySkills[state.currentSkillIndex];
-            if (s.type === "passive") return addLog("被動功法無需主動施展，已默默守護著你。");
+            if(s.type === "passive") return addLog("這是被動技能，無需施展。");
 
+            // --- 彭大仙滅世功法 專屬邏輯 ---
             if (s.name === "彭大仙滅世功法") {
-                addLog(`<span class="log-divine">🔥 施展【彭大仙滅世功法】！你燃燒了全身精血！</span>`);
+                addLog(`<span style="color:red; font-weight:bold;">🔥 施展【彭大仙滅世功法】！捨命一擊！</span>`);
                 state.hp = 1; enemy.hp = 0;
-                if(state.isFacingInnerDemon) this.triggerEnding();
-                else this.winBattle();
+                this.winBattle();
                 return;
             }
 
-            if(state.mp < (s.cost || 0)) return addLog("靈力枯竭，無法施展神通！");
+            if(state.mp < (s.cost || 0)) return addLog("靈力不足。");
             state.mp -= (s.cost || 0);
-
-            let mult = (state.isDemon ? 2.0 : 1.0) * (state.spiritType === "火" ? 1.15 : 1);
-            let divineMult = 1.0;
-            if (state.mySkills.some(sk => sk.name === "金剛不壞童子身")) divineMult += (state.maxHp / 100) * 0.5;
-            if (state.mySkills.some(sk => sk.name === "鬥破山河焚仙訣")) divineMult += (state.maxMp / 50) * 0.5;
-
-            let d = Math.ceil(state.atk * state.currentWeapon.mult * (s.mult || 1.0) * mult * divineMult);
+            let d = Math.ceil(state.atk * state.currentWeapon.mult * (s.mult || 1.5) * (state.isDemon ? 2:1));
             enemy.hp -= d;
-            if(s.name === "金剛經") {
-                state.hp = Math.min(state.maxHp, state.hp + 25);
-                addLog(`<span class="log-skill">🛡️ 施展【${s.name}】，回氣補血並造成 ${d} 傷害！</span>`);
-            } else {
-                addLog(`<span class="log-skill">🔥 施展【${s.name}】，狂暴能量造成 ${d} 傷害！</span>`);
-            }
+            addLog(`<span class="log-skill">🔥 施展【${s.name}】，造成 ${d} 傷害！</span>`);
+            if(enemy.hp <= 0) this.winBattle();
+            else this.enemyTurn();
+        },
 
-            if(enemy.hp <= 0) {
-                if(state.isFacingInnerDemon) this.triggerEnding();
-                else this.winBattle();
-            } else this.enemyTurn();
+        winBattle: function() {
+            if(state.isFacingInnerDemon) return this.triggerEnding();
+            let getMoney = 150 + state.realmIndex*50;
+            state.money += getMoney; 
+            if(enemy.drop !== "無" && enemy.drop !== undefined) state.loot[enemy.drop]++;
+            addLog(`<span class="log-win">🏆 靈石 +${getMoney}</span>`);
+            this.endBattle();
         },
 
         enemyTurn: function() {
             let d = Math.ceil(enemy.atk * (1 - state.currentArmor.def));
             state.hp -= d;
-            addLog(`👹 ${enemy.name} 反擊，造成 <span class="val-down">${d}</span> 點傷害。`);
-            if (checkDeath(state.isFacingInnerDemon ? "道心崩碎，終究沒能渡過心魔劫。" : "力戰而亡。")) return;
+            addLog(`👹 ${enemy.name} 反擊，造成 ${d} 傷害。`);
+            if (checkDeath(state.isFacingInnerDemon ? "道心崩碎。" : "力戰而亡。")) return;
             updateDisplay(); save();
-        },
-
-        winBattle: function() {
-            let getMoney = 150 + state.realmIndex * 50;
-            state.money += getMoney; 
-            if(enemy.drop !== "無") state.loot[enemy.drop]++;
-            addLog(`<span class="log-win">🏆 凱旋而歸！靈石 +${getMoney}</span>`);
-            this.endBattle();
-        },
-
-        escapeBattle: function() {
-            if(state.isFacingInnerDemon) {
-                addLog(`<span style="color:#ff00ff;">💀 懦弱！你在心魔面前選擇逃避，道心墮入黑暗！</span>`);
-                state.isDemon = true;
-                state.realmIndex = Math.max(0, state.realmIndex - 2);
-                state.baseAtk *= 2; state.atk = state.baseAtk;
-                state.isFacingInnerDemon = false;
-                this.endBattle(); return;
-            }
-            if(Math.random() < state.currentShoe.escapeRate) {
-                addLog(`💨 你身形一閃，成功逃離了戰場。`); 
-                this.endBattle();
-            } else {
-                addLog(`❌ 妖獸封鎖了退路，逃跑失敗！`); 
-                this.enemyTurn();
-            }
-        },
-
-        triggerEnding: function() {
-            state.realmIndex = 6; state.baseAtk = 999999; state.atk = 999999;
-            state.isFacingInnerDemon = false; isInBattle = false;
-            updateDisplay();
-            document.getElementById('advance-title').innerText = "🎉 恭喜藍聖，得道成仙！";
-            document.getElementById('advance-desc').innerHTML = "你已斬斷心魔，三界之內再無敵手！<br>現在你的修為已入化境。";
-            document.getElementById('advance-btns').innerHTML = `
-                <button onclick="location.reload()" style="flex:1; background:#ffd700; color:#000; padding:10px;"><b>【再續仙緣】</b></button>
-                <button onclick="Game.closeEnding()" style="flex:1; background:#000; color:#ffd700; padding:10px; border:1px solid #ffd700;"><b>【統治諸天】</b></button>
-            `;
-            document.getElementById('advance-overlay').style.display = 'flex';
-        },
-
-        closeEnding: function() {
-            document.getElementById('advance-overlay').style.display = 'none';
-            this.endBattle();
-            addLog(`<span class="log-divine">✨ 仙尊在上，萬仙伏首，藍聖傳奇永垂不朽！</span>`);
-        },
-
-        renderShop: function() {
-            let bList = document.getElementById('shop-items-list');
-            bList.innerHTML = "";
-            weapons.forEach((w,i) => { if(i <= state.realmIndex) bList.innerHTML += `<div class="shop-item" onclick="Game.buyItem('weapon',${i})"><span>🗡️ ${w.name}</span><b>${w.price} 靈石</b></div>`; });
-            armors.forEach((a,i) => { if(i <= state.realmIndex) bList.innerHTML += `<div class="shop-item" onclick="Game.buyItem('armor',${i})"><span>🛡️ ${a.name}</span><b>${a.price} 靈石</b></div>`; });
-            shoes.forEach((s,i) => { if(i <= state.realmIndex) bList.innerHTML += `<div class="shop-item" onclick="Game.buyItem('shoe',${i})"><span>👟 ${s.name}</span><b>${s.price} 靈石</b></div>`; });
-            bList.innerHTML += `<div class="shop-item" onclick="Game.buyItem('potion',0)"><span>💊 大還丹 (回血50%)</span><b>100 靈石</b></div>`;
         },
 
         buyItem: function(type, idx) {
             let item = (type==='weapon') ? weapons[idx] : (type==='armor') ? armors[idx] : (type==='shoe') ? shoes[idx] : {name:"大還丹", price:100};
-            if(state.money < item.price) return addLog("靈石不足，掌櫃的把你轟了出來。");
+            if(state.money < item.price) return addLog("靈石不足！");
             state.money -= item.price;
             if(type==='weapon') state.currentWeapon = item;
             else if(type==='armor') state.currentArmor = item;
             else if(type==='shoe') state.currentShoe = item;
             else state.potions++;
-            addLog(`🛍️ 購得 <span style="color:#00ffcc;">${item.name}</span>，實力更進一步。`);
+            addLog(`🛍️ 購得 ${item.name}。`);
             updateDisplay(); save();
         },
 
-        rest: function() {
-            state.mp = state.maxMp;
-            addLog(`😴 閉目調息，靈力已補滿。`); 
+        sellAllLoot: function() {
+            let e = state.loot["妖丹"]*150 + state.loot["獸皮"]*40 + state.loot["精血"]*60;
+            state.money += e; state.loot = { "妖丹": 0, "獸皮": 0, "精血": 0 };
+            addLog(`💰 獲得靈石 +${e}`);
             updateDisplay(); save();
+        },
+
+        usePotion: function() {
+            if(state.potions > 0) {
+                state.potions--; state.hp = Math.min(state.maxHp, state.hp + state.maxHp*0.5);
+                addLog(`💊 使用大還丹。`);
+            }
+            updateDisplay(); save();
+        },
+
+        triggerEnding: function() {
+            state.realmIndex = 6; state.atk = 999999;
+            document.getElementById('advance-overlay').style.display = 'flex';
+            document.getElementById('advance-title').innerText = "🎉 藍聖成仙！";
+            document.getElementById('advance-desc').innerText = "你已戰勝心魔，三界唯你獨尊。";
+            this.endBattle();
         },
 
         endBattle: function() {
@@ -385,33 +314,18 @@ const Game = (function() {
             updateDisplay(); save();
         },
 
-        sellAllLoot: function() {
-            let e = state.loot["妖丹"]*150 + state.loot["獸皮"]*40 + state.loot["精血"]*60;
-            if(e === 0) return addLog("儲物袋空空如也。");
-            state.money += e; state.loot = { "妖丹": 0, "獸皮": 0, "精血": 0 };
-            addLog(`💰 變賣素材，獲得 <span style="color:#ffd700;">靈石 +${e}</span>`);
-            updateDisplay(); save();
+        renderShop: function() {
+            let bList = document.getElementById('shop-items-list');
+            bList.innerHTML = "";
+            weapons.forEach((w,i) => { if(i <= state.realmIndex) bList.innerHTML += `<div class="shop-item" onclick="Game.buyItem('weapon',${i})"><span>🗡️ ${w.name}</span><b>${w.price}</b></div>`; });
+            armors.forEach((a,i) => { if(i <= state.realmIndex) bList.innerHTML += `<div class="shop-item" onclick="Game.buyItem('armor',${i})"><span>🛡️ ${a.name}</span><b>${a.price}</b></div>`; });
+            bList.innerHTML += `<div class="shop-item" onclick="Game.buyItem('potion',0)"><span>💊 大還丹</span><b>100</b></div>`;
         },
 
-        usePotion: function() {
-            if(state.potions > 0) {
-                state.potions--; 
-                let heal = Math.floor(state.maxHp * 0.5);
-                state.hp = Math.min(state.maxHp, state.hp + heal);
-                addLog(`<span class="val-up">💊 服用大還丹，氣血回復 ${heal} 點。</span>`);
-            }
-            updateDisplay(); save();
-        },
-
+        rest: function() { state.mp = state.maxMp; addLog(`😴 靈力補滿。`); updateDisplay(); save(); },
         setSkill: function(idx) { state.currentSkillIndex = idx; updateDisplay(); },
-        choosePath: function(type) {
-            if(type === 'body') state.maxHp += 100;
-            else state.maxMp += 50;
-            state.hp = state.maxHp; state.mp = state.maxMp;
-            document.getElementById('advance-overlay').style.display = 'none';
-            updateDisplay(); save();
-        },
-        closeShop: function() { document.getElementById('shop-overlay').style.display = 'none'; }
+        closeShop: function() { document.getElementById('shop-overlay').style.display = 'none'; },
+        choosePath: function(t) { if(t==='body') state.maxHp+=100; else state.maxMp+=50; state.hp=state.maxHp; document.getElementById('advance-overlay').style.display='none'; updateDisplay(); save(); }
     };
 })();
 
