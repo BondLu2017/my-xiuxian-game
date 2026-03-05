@@ -41,7 +41,7 @@
     <div id="death-screen" class="overlay">
         <h1 style="color:red">身死道消</h1>
         <p id="death-reason" style="color:#888; margin-bottom:20px;"></p>
-        <button onclick="location.reload()" style="width:150px; background:#600;">投胎轉世</button>
+        <button onclick="Game.restartGame()" style="width:150px; background:#600;">投胎轉世</button>
     </div>
 
     <h2 style="text-align: center; color: #fff; margin: 0 0 15px 0; text-shadow: 0 0 10px #3498db;">☯️ 修仙：藍聖傳</h2>
@@ -92,7 +92,7 @@
         <button id="use-potion-btn" onclick="Game.usePotion()" style="padding:2px 8px; font-size:10px; margin-left:10px;" disabled>服用</button>
     </div>
     
-    <div id="skill-list-ui">神通庫：無</div>
+    <div id="skill-list-ui" style="font-size: 12px; color: #ffd700; margin-top: 5px;">神通庫：無</div>
     
     <button onclick="if(confirm('確定要輪迴轉世並重置進度嗎？')) { localStorage.clear(); location.reload(); }" 
             style="margin-top:15px; font-size:10px; background:none; border:none; color:#444; width:100%; cursor:pointer;">
